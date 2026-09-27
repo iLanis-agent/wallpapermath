@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>WallpaperMath - honest wallpaper math</title>
+<style>
+  :root { --bg:#12161a; --card:#1a2129; --ink:#ecf1f4; --dim:#9db0bc; --acc:#5fb3a8; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:16px/1.5 -apple-system, "Segoe UI", Roboto, sans-serif; }
+  header { padding:28px 24px 8px; max-width:980px; margin:0 auto; display:flex; justify-content:space-between; align-items:baseline; }
+  h1 { margin:0; font-size:28px; }
+  h1 span { color:var(--acc); }
+  nav a { color:var(--dim); text-decoration:none; font-size:14px; }
+  main { max-width:980px; margin:0 auto; padding:16px 24px 60px; display:grid; gap:18px; }
+  .card { background:var(--card); border-radius:14px; padding:20px; }
+  .card h2 { margin:0 0 12px; font-size:13px; letter-spacing:1.5px; color:var(--dim); text-transform:uppercase; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:14px; }
+  label { display:block; font-size:13px; color:var(--dim); margin-bottom:4px; }
+  input, select { width:100%; background:#151b21; border:1px solid #3a4a55; color:var(--ink); border-radius:8px; padding:9px 10px; font-size:15px; }
+  .hint { font-size:12.5px; color:var(--dim); margin-top:10px; }
+  button { cursor:pointer; border:0; border-radius:9px; padding:11px 16px; font-size:15px; background:var(--acc); color:#0c2420; font-weight:600; }
+  button.ghost { background:#2d3a44; color:var(--ink); font-weight:500; }
+  .row { display:flex; gap:10px; flex-wrap:wrap; margin-top:14px; }
+  .verdict { font-size:17px; line-height:1.65; }
+  .verdict b { color:var(--acc); }
+  .stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:10px; margin-top:16px; }
+  .stat { background:#151b21; border-radius:10px; padding:12px; }
+  .stat .v { font-size:19px; font-weight:700; color:var(--acc); }
+  .stat .k { font-size:12px; color:var(--dim); margin-top:2px; }
+  .warn { background:#23343a; border:1px solid #3d6a6e; border-radius:10px; padding:12px 14px; margin-top:14px; font-size:14px; color:#cdebe7; }
+  table.bd { width:100%; border-collapse:collapse; margin-top:6px; font-size:14.5px; }
+  table.bd td { padding:7px 4px; border-bottom:1px solid #2a353e; }
+  table.bd td:last-child { text-align:right; color:var(--acc); font-weight:600; }
+  .fine { font-size:12.5px; color:var(--dim); margin-top:8px; }
+  a { color:var(--acc); }
+</style>
+</head>
+<body>
+<header>
+  <h1>Wallpaper<span>Math</span></h1>
+  <nav><a href="index.html">about</a></nav>
+</header>
+<main>
+  <section class="card">
+    <h2>The room</h2>
+    <div class="grid">
+      <div>
+        <label for="len">Room length (ft)</label>
+        <input id="len" type="number" min="1" max="80" step="0.5" value="12">
+      </div>
+      <div>
+        <label for="wid">Room width (ft)</label>
+        <input id="wid" type="number" min="1" max="80" step="0.5" value="10">
+      </div>
+      <div>
+        <label for="hgt">Ceiling height (ft)</label>
+        <input id="hgt" type="number" min="6" max="20" step="0.5" value="8">
+      </div>
+    </div>
+    <p class="hint">One room at a time - every room gets its own strips and its own offcuts. Doors and windows are NOT deducted: their offcuts are short, and pros count them as your waste margin, not your savings.</p>
+  </section>
+
+  <section class="card">
+    <h2>The paper</h2>
+    <div class="grid">
+      <div>
+        <label for="roll">Roll size</label>
+        <select id="roll">
+          <option value="double">Double roll (20.5 in x 33 ft)</option>
+          <option value="wide">Wide double (27 in x 27 ft)</option>
+          <option value="single">Single roll (20.5 in x 16.5 ft)</option>
+        </select>
+      </div>
+      <div>
+        <label for="match">Pattern match</label>
+        <select id="match">
+          <option value="random">Random / no match</option>
+          <option value="straight">Straight match</option>
+          <option value="drop">Half-drop match</option>
+        </select>
+      </div>
+      <div>
+        <label for="repeat">Pattern repeat (in)</label>
+        <input id="repeat" type="number" min="0" max="60" step="0.25" value="0">
+      </div>
+      <div>
+        <label for="price">Price per roll ($)</label>
+        <input id="price" type="number" min="0" max="1000" step="1" value="65">
+      </div>
+    </div>
+    <div class="row">
+      <button id="go">Do the math</button>
+      <button class="ghost" data-preset="powder">Powder room</button>
+      <button class="ghost" data-preset="bedroom">Bedroom</button>
+      <button class="ghost" data-preset="dining">Dining room</button>
+    </div>
+    <p class="hint">The repeat is printed on the label. "Straight" and "half-drop" both round every strip up to a whole repeat - that is where the extra rolls hide.</p>
+  </section>
+
+  <section class="card" id="out" hidden>
+    <h2>Your order</h2>
+    <div class="verdict" id="verdict"></div>
+    <div class="stats" id="stats"></div>
+    <div id="warnbox"></div>
+    <table class="bd" id="breakdown"></table>
+    <p class="fine">Rolls are priced and sold as packaged. Paste, primer/sizing, smoothing tools and the ladder are separate. Buy every roll from the same dye lot (batch number on the label) - the same pattern from two lots can read as two colors on one wall.</p>
+  </section>
+
+  <section class="card">
+    <h2>What the label will not explain</h2>
+    <table class="bd">
+      <tr><td>"Covers 56 sq ft" is marketing arithmetic</td><td>you buy strips, not area - a roll yields only whole strips, and the leftover foot does not transfer to the next wall</td></tr>
+      <tr><td>The repeat eats paper</td><td>every strip rounds up to a whole pattern repeat; a 25 in repeat on 8 ft walls wastes nearly a fifth of every strip</td></tr>
+      <tr><td>Half-drop doubles the confusion</td><td>odd and even strips offset by half a repeat; count on the same waste as straight match, plus more planning</td></tr>
+      <tr><td>Singles are billed as doubles</td><td>most US paper ships in double-roll bolts but is priced per single roll - check which unit the price tag means before comparing</td></tr>
+      <tr><td>Dye lots are real</td><td>order every roll at once and keep one for repairs; a roll ordered next year will not match your wall</td></tr>
+      <tr><td>Feature walls still need margin</td><td>one wall of four strips still wastes the same repeat on every strip</td></tr>
+    </table>
+  </section>
+</main>
+<script src="engine.js"></script>
+<script>
+(function () {
+  function val(id) { return document.getElementById(id).value; }
+  function num(id) { return parseFloat(val(id)) || 0; }
+  function money(x) { return '$' + x.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+  function fmt(x) { return x.toLocaleString('en-US', { maximumFractionDigits: 1 }); }
+
+  function render() {
+    var p = WallpaperMath.plan({
+      lengthFt: num('len'), widthFt: num('wid'), heightFt: num('hgt'),
+      match: val('match'), repeatIn: num('repeat'),
+      rollType: val('roll'), pricePerRoll: num('price')
+    });
+    if (!(p.wallSqFt > 0)) { document.getElementById('out').hidden = true; return; }
+
+    document.getElementById('verdict').innerHTML =
+      'Order <b>' + p.rollsNeeded + ' rolls</b> (' + p.rollLabel + ') for ' + p.stripsNeeded +
+      ' strips of ' + fmt(p.stripIn) + ' in around ' + fmt(p.perimeterFt) + ' ft of wall. Material total <b>' +
+      money(p.totalCost) + '</b>.';
+
+    var stats = [
+      ['Rolls to order', p.rollsNeeded],
+      ['Strips needed', p.stripsNeeded],
+      ['Strips per roll', p.stripsPerRoll],
+      ['Spare strips', p.spareStrips],
+      ['Repeat waste', fmt(p.repeatWastePct) + '%'],
+      ['Material total', money(p.totalCost)]
+    ];
+    document.getElementById('stats').innerHTML = stats.map(function (s) {
+      return '<div class="stat"><div class="v">' + s[1] + '</div><div class="k">' + s[0] + '</div></div>';
+    }).join('');
+
+    var warns = [];
+    if (p.repeatWastePct >= 10)
+      warns.push('The ' + num('repeat') + ' in repeat wastes <b>' + fmt(p.repeatWastePct) + '%</b> of every strip. A random-match paper would need the same strips but can share offcuts - on this room it saves nothing per roll, so the repeat tax is already priced in honestly.');
+    if (p.spareStrips === 0)
+      warns.push('Zero spare strips: one miscut or one damaged edge and you are a roll short, back at the store hoping the dye lot still matches. One extra roll is cheap insurance.');
+    if (p.spareStrips >= 1)
+      warns.push('You finish with ' + p.spareStrips + ' spare strip' + (p.spareStrips === 1 ? '' : 's') + ' - keep ' + (p.spareStrips === 1 ? 'it' : 'them') + ' rolled and labeled. Future-you patching a damaged section needs that dye lot.');
+    document.getElementById('warnbox').innerHTML = warns.map(function (w) {
+      return '<div class="warn">' + w + '</div>';
+    }).join('');
+
+    var rows = [['Rolls (' + p.rollLabel + ')', p.rollsNeeded + ' x ' + money(num('price'))],
+                ['Material total', money(p.totalCost)]];
+    document.getElementById('breakdown').innerHTML = rows.map(function (r) {
+      return '<tr><td>' + r[0] + '</td><td>' + r[1] + '</td></tr>';
+    }).join('');
+    document.getElementById('out').hidden = false;
+  }
+
+  var presets = {
+    powder: { len: 6, wid: 5, hgt: 8, match: 'straight', repeat: 21, roll: 'double', price: 72 },
+    bedroom: { len: 12, wid: 10, hgt: 8, match: 'random', repeat: 0, roll: 'double', price: 65 },
+    dining: { len: 14, wid: 12, hgt: 9, match: 'drop', repeat: 25.25, roll: 'double', price: 88 }
+  };
+  function loadPreset(key) {
+    var pr = presets[key];
+    document.getElementById('len').value = pr.len;
+    document.getElementById('wid').value = pr.wid;
+    document.getElementById('hgt').value = pr.hgt;
+    document.getElementById('match').value = pr.match;
+    document.getElementById('repeat').value = pr.repeat;
+    document.getElementById('roll').value = pr.roll;
+    document.getElementById('price').value = pr.price;
+    render();
+  }
+
+  document.getElementById('go').addEventListener('click', render);
+  document.querySelectorAll('[data-preset]').forEach(function (b) {
+    b.addEventListener('click', function () { loadPreset(b.getAttribute('data-preset')); });
+  });
+  ['len', 'wid', 'hgt', 'roll', 'match', 'repeat', 'price'].forEach(function (id) {
+    document.getElementById(id).addEventListener('input', render);
+  });
+
+  loadPreset('dining');
+})();
+</script>
+</body>
+</html>
